@@ -63,6 +63,7 @@ export function SelectField({
     top: number;
     left: number;
     width: number;
+    placement: "bottom" | "top";
   } | null>(null);
 
   const selectedIndex = useMemo(
@@ -88,14 +89,14 @@ export function SelectField({
         ? hceColors.alert.error[600]
         : hceColors.primary.blue[600];
 
- const cssVars = {
-  "--sf-main":          mainColor,
-  "--sf-value-default": valueColor,
-  "--sf-value-active":  valueColor,
-  "--sf-focus-ring":    hceColors.primary.blue[100],
-  "--sf-menu-max-height": `${menuMaxHeight}px`,
-  "--sf-selected-bg":   hceColors.primary.blue[600], // ← nueva, fija, no theme-aware
-} as CSSProperties;
+  const cssVars = {
+    "--sf-main": mainColor,
+    "--sf-value-default": valueColor,
+    "--sf-value-active": valueColor,
+    "--sf-focus-ring": hceColors.primary.blue[100],
+    "--sf-menu-max-height": `${menuMaxHeight}px`,
+    "--sf-selected-bg": hceColors.primary.blue[600], // ← nueva, fija, no theme-aware
+  } as CSSProperties;
 
   // Cierra al hacer click afuera (revisa tanto el trigger/label como el
   // listbox en el portal). Usa fase de captura (tercer argumento `true`)
@@ -256,17 +257,32 @@ export function SelectField({
     const updatePosition = () => {
       const rect = triggerRef.current?.getBoundingClientRect();
       if (!rect) return;
+
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      // Altura real del menú si ya se renderizó antes (rAF de respaldo);
+      // en el primer cálculo, usa menuMaxHeight como estimado conservador
+      const menuHeight = listRef.current?.offsetHeight || menuMaxHeight;
+
+      // Abre hacia arriba solo si no entra abajo Y sí entra arriba
+      // (evita el caso raro de "no entra en ningún lado" abriendo hacia
+      // el lado con más espacio disponible aunque tampoco alcance del todo)
+      const shouldFlipUp =
+        spaceBelow < menuHeight + 4 && spaceAbove > spaceBelow;
       setMenuPosition({
-        top: rect.bottom + 4,
+        top: shouldFlipUp
+          ? rect.top - 4 // se posiciona pegado arriba del trigger
+          : rect.bottom + 4,
         left: rect.left,
         width: rect.width,
+        placement: shouldFlipUp ? "top" : "bottom",
       });
     };
 
     updatePosition();
 
-    // Respaldo: recaptura la posición en el siguiente frame por si hubo
-    // un reflow tardío entre el primer cálculo y el pintado real.
     const rafId = requestAnimationFrame(updatePosition);
 
     window.addEventListener("resize", updatePosition);
@@ -274,7 +290,7 @@ export function SelectField({
       cancelAnimationFrame(rafId);
       window.removeEventListener("resize", updatePosition);
     };
-  }, [open]);
+  }, [open, menuMaxHeight]);
 
   const reactId = useId();
   const listboxId = `hce-selectfield-${reactId}-listbox`;
@@ -332,9 +348,11 @@ export function SelectField({
             tabIndex={-1}
             style={{
               ...cssVars,
-              top: menuPosition.top,
               left: menuPosition.left,
               width: menuPosition.width,
+              ...(menuPosition.placement === "top"
+                ? { bottom: window.innerHeight - menuPosition.top, top: "auto" }
+                : { top: menuPosition.top, bottom: "auto" }),
             }}
             onKeyDown={handleListKeyDown}
           >
