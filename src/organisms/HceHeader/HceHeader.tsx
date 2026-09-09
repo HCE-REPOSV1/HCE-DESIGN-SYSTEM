@@ -6,6 +6,7 @@ import { useDsTenant } from "../../provider/ThemeProvider"
 import { getCompanyBranding } from "../../theme/companyBranding"
 
 import { useEffect, useRef, useState, type ReactNode } from "react"
+import { HceTooltip } from "../../atoms/HceTooltip/HceTooltip"
 // ─── Tipos públicos ───────────────────────────────────────────────────────────
 
 export type Sucursal = {
@@ -105,6 +106,10 @@ export type HceHeaderProps = {
   sede?:             string | number
   sucursales?:       Sucursal[]
   onSedeCambiada?:  (sedeId: string | number) => void
+  /** Deshabilita el selector de sede aunque existan varias sucursales. */
+  sedeDisabled?:     boolean
+  /** Texto del tooltip mostrado cuando el selector de sede está deshabilitado. */
+  sedeDisabledTooltip?: string
   userName?:         string
   userRole?:         string
   /** URL de la foto de perfil del usuario. Si carga correctamente, reemplaza las iniciales. */
@@ -137,6 +142,8 @@ export function HceHeader({
   sede,
   sucursales      = [],
   onSedeCambiada,
+  sedeDisabled    = false,
+  sedeDisabledTooltip = "No se puede cambiar de sede cuando esta abierto una atencion",
   userName        = "Usuario",
   userRole        = "",
   userPhotoUrl,
@@ -196,15 +203,30 @@ export function HceHeader({
     return () => clearInterval(interval)
   }, [])
 
+  const sedeSelect = (
+    <select
+      className="hce-hceheader-sede-select"
+      value={selectedSede}
+      onChange={e => onSedeCambiada?.(e.target.value)}
+      disabled={sedeDisabled || !multiSede}
+    >
+      {sucursales.map(s => (
+        <option key={String(s.id)} value={String(s.id)}>
+          {s.nombre}
+        </option>
+      ))}
+    </select>
+  )
+
   return (
     <header
       data-testid={testId}
       style={{
-        height:          64,
+        height:           64,
         backgroundColor: 'var(--ds-color-interactive, #003d96)',
         display:         "flex",
         alignItems:      "center",
-        padding:         "0 16px",
+        padding:          "0 16px",
         width:           "100%",
         flexShrink:      0,
         position:        "relative",
@@ -231,6 +253,8 @@ export function HceHeader({
           </button>
         )}
 
+  <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 , width: 200,
+      maxWidth: "100%"}}>
         <span className="hce-hceheader-title" style={{
           fontFamily: hceTypography.fontFamily,
           color:      "white",
@@ -242,20 +266,25 @@ export function HceHeader({
          {headerTitle}
         </span>
 
+         
+ </div>
+
         {sucursales.length > 0 && (
-          <select
-            className="hce-hceheader-sede-select"
-            value={selectedSede}
-            onChange={e => onSedeCambiada?.(e.target.value)}
-            disabled={!multiSede}
-          >
-            {sucursales.map(s => (
-              <option key={String(s.id)} value={String(s.id)}>
-                {s.nombre}
-              </option>
-            ))}
-          </select>
+          sedeDisabled ? (
+            <HceTooltip
+              title={sedeDisabledTooltip}
+              placement="bottom"
+            >
+              <span>
+                {sedeSelect}
+              </span>
+            </HceTooltip>
+          ) : (
+            sedeSelect
+          )
         )}
+
+      
       </div>
 
       {/* ── Centro: logo ─────────────────────────────────────── */}

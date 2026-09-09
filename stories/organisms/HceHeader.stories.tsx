@@ -54,8 +54,19 @@ export const MultipleSedes: Story = {
 /** Header con una sola sede — el select está deshabilitado */
 export const UnaSede: Story = {
   args: {
-    sede:       "1",
+    sede:      1,
     sucursales: SUCURSALES_UNA,
+    userName:   "María Torres",
+    userRole:   "Enfermera",
+  },
+}
+
+/** Header no permite cambiar la sede actual*/
+export const DeshabilitarSelector: Story = {
+  args: {
+    sede:      1,
+    sedeDisabled: true,
+    sucursales: SUCURSALES_MULTI,
     userName:   "María Torres",
     userRole:   "Enfermera",
   },
