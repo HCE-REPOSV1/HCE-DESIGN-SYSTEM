@@ -7,6 +7,11 @@ Versionado basado en [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.10.0] - 2026-09-10
+
+### Agregado
+- **`HceHeader`**: nuevas props `sedeDisabled`/`sedeDisabledTooltip` — permiten deshabilitar el selector de sede (ej. mientras hay una atención abierta) mostrando un tooltip explicativo en vez de solo bloquear el control sin contexto.
+
 ## [1.5.0] - 2026-08-26
 
 ### Agregado
