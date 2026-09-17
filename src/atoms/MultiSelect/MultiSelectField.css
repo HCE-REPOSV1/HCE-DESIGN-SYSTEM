@@ -128,3 +128,20 @@
 .hce-multiselect-option--active {
   background-color: #e6ecf6;
 }
+
+/* Mismo spinner que molecules/SearchComboInput/SearchComboInput.css
+ * (.hce-scombo-spinner) — se muestra en el trigger mientras el padre
+ * resuelve una búsqueda async disparada por onSearch. */
+.hce-multiselect-search-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--ds-color-primary-dark, rgba(0, 67, 165, 0.25));
+  border-top-color: var(--ds-color-primary-light, #0043a5);
+  animation: hce-multiselect-spin 800ms linear infinite;
+}
+
+@keyframes hce-multiselect-spin {
+  to { transform: rotate(360deg); }
+}

@@ -30,6 +30,22 @@ interface Props {
   /** Muestra la opción "Todos" al inicio de la lista, que selecciona/deselecciona
    * todas las opciones a la vez. Default: true */
   showSelectAll?: boolean;
+  /** Se dispara con debounce (ver debounceMs) al escribir en el buscador,
+   * una vez alcanzado minSearchLength — mismo patrón que
+   * molecules/SearchComboInput/onSearch — para que el padre pueda resolver
+   * la búsqueda contra una API en vez de depender solo del filtrado
+   * client-side sobre `options`. Opcional: sin este prop el comportamiento
+   * es 100% el filtrado local de siempre, sin cambios. */
+  onSearch?: (query: string) => void;
+  /** Cantidad mínima de caracteres para disparar onSearch. Default: 2 (mismo
+   * default que SearchComboInput). Ignorado si no se pasa onSearch. */
+  minSearchLength?: number;
+  /** ms de debounce antes de disparar onSearch. Default: 300. */
+  debounceMs?: number;
+  /** Muestra un estado de carga en el listbox mientras el padre resuelve una
+   * búsqueda async disparada por onSearch — las opciones previas se
+   * mantienen visibles debajo del spinner, no se reemplazan por un mensaje. */
+  loading?: boolean;
   /** Hook de pruebas E2E — id base, aplicado al trigger. */
   testId?: string;
 }
@@ -100,6 +116,10 @@ export const MultiSelect = ({
   required,
   error,
   showSelectAll = true,
+  onSearch,
+  minSearchLength = 2,
+  debounceMs = 300,
+  loading = false,
   testId,
 }: Props) => {
   const [open, setOpen] = useState(false);
@@ -108,8 +128,17 @@ export const MultiSelect = ({
   const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLInputElement>(null);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerId = useId();
   const listId = useId();
+
+  // Limpia el debounce pendiente al desmontar — evita disparar onSearch
+  // sobre un componente que ya no está montado.
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, []);
 
   const accentColor = disabled
     ? hceColors.neutro.black[300]
@@ -275,8 +304,19 @@ export const MultiSelect = ({
             if (!disabled) openMenu();
           }}
           onChange={(e) => {
-            setSearchQuery(e.target.value);
+            const q = e.target.value;
+            setSearchQuery(q);
             if (!open) openMenu();
+
+            if (onSearch) {
+              if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+              if (q.trim().length >= minSearchLength) {
+                searchTimerRef.current = setTimeout(
+                  () => onSearch(q),
+                  debounceMs,
+                );
+              }
+            }
           }}
           onKeyDown={handleInputKeyDown}
           aria-haspopup="listbox"
@@ -351,6 +391,22 @@ export const MultiSelect = ({
             <ClearGlyph />
           </button>
         )}
+
+        {/* Solo mientras el dropdown está abierto y el padre resuelve una
+            búsqueda async — las opciones previas siguen visibles debajo, este
+            spinner no las reemplaza (ver listbox más abajo). */}
+        {open && loading && (
+          <span
+            className="hce-multiselect-search-spinner"
+            style={{
+              position: "absolute",
+              right: value.length > 0 && !disabled ? 34 : 10,
+              top: "50%",
+              transform: "translateY(-50%)",
+              pointerEvents: "none",
+            }}
+          />
+        )}
       </div>
 
       <Menu
@@ -372,7 +428,7 @@ export const MultiSelect = ({
       >
         {listOptions.length === 0 && (
           <div className="hce-multiselect-empty">
-            Sin resultados para "{searchQuery}"
+            {loading ? "Buscando..." : `Sin resultados para "${searchQuery}"`}
           </div>
         )}
 

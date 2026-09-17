@@ -106,6 +106,54 @@ export const SeleccionadoPersisteAlBuscar: Story = {
 };
 
 /**
+ * onSearch — mismo patrón que molecules/SearchComboInput: se dispara con
+ * debounce (300ms) al escribir, una vez alcanzado minSearchLength (acá 3),
+ * para que el padre resuelva la búsqueda contra una API en vez de depender
+ * solo del filtrado client-side sobre `options`. Mientras `loading=true` se
+ * muestra un spinner en el trigger sin ocultar las opciones ya cargadas.
+ *
+ * Esta story simula la API con un timeout de 600ms — escribir 3+ caracteres
+ * dispara el spinner y luego reemplaza `options` por el resultado "server".
+ */
+export const BusquedaAsincronaConDebounce: Story = {
+  render: (args) => {
+    const [value, setValue] = useState<string[]>([]);
+    const [options, setOptions] = useState(EMPRESAS);
+    const [loading, setLoading] = useState(false);
+
+    const handleSearch = (query: string) => {
+      setLoading(true);
+      setTimeout(() => {
+        setOptions(
+          EMPRESAS.filter((o) =>
+            o.label.toLowerCase().includes(query.toLowerCase()),
+          ),
+        );
+        setLoading(false);
+      }, 600);
+    };
+
+    return (
+      <MultiSelect
+        {...args}
+        options={options}
+        value={value}
+        onChange={setValue}
+        onSearch={handleSearch}
+        minSearchLength={3}
+        loading={loading}
+      />
+    );
+  },
+  args: {
+    label: "Empresas",
+    disabled: false,
+    fullWidth: true,
+    required: false,
+  },
+};
+
+/**
  * disabled=true ya NO bloquea la apertura del dropdown (a diferencia del
  * comportamiento anterior, que usaba el `disabled` nativo de Autocomplete):
  * el panel se puede abrir e inspeccionar, pero cada opción queda inerte
