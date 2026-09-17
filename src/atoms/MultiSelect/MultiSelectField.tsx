@@ -193,7 +193,16 @@ export const MultiSelect = ({
   }, [normalizedQuery]);
 
   useEffect(() => {
-    if (open) setSearchQuery("");
+    if (open) {
+      setSearchQuery("");
+      // Avisar al padre que ya no hay texto de búsqueda activo — sin esto,
+      // al reabrir el input se ve vacío pero `options` sigue siendo el
+      // resultado de la última búsqueda (el padre nunca se entera de que
+      // el texto se limpió), y el listbox queda mostrando información
+      // "fantasma" que no corresponde a lo que el usuario ve tecleado.
+      onSearch?.("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const listOptions: Option[] =
@@ -315,6 +324,12 @@ export const MultiSelect = ({
                   () => onSearch(q),
                   debounceMs,
                 );
+              } else {
+                // Por debajo del umbral (incluido vacío): avisar de
+                // inmediato, sin debounce, para que el padre pueda
+                // descartar el resultado de una búsqueda previa en vez de
+                // dejarlo mostrado sin respaldo en el texto tecleado.
+                onSearch(q);
               }
             }
           }}
