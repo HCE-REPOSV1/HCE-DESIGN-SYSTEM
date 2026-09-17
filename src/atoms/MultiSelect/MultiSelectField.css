@@ -129,6 +129,16 @@
   background-color: #e6ecf6;
 }
 
+/* Mismo padding que .hce-multiselect-option — sin esto el texto queda
+ * pegado al borde del panel, a diferencia de cuando sí hay opciones. */
+.hce-multiselect-empty {
+  padding: 8px 16px;
+  font-family: var(--ds-font-family, 'Poppins', sans-serif);
+  font-size: 0.875rem;
+  color: #333333;
+  white-space: nowrap;
+}
+
 /* Mismo spinner que molecules/SearchComboInput/SearchComboInput.css
  * (.hce-scombo-spinner) — se muestra en el trigger mientras el padre
  * resuelve una búsqueda async disparada por onSearch. */

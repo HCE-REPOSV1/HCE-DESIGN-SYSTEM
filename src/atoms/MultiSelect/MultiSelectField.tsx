@@ -441,11 +441,20 @@ export const MultiSelect = ({
             "0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)",
         }}
       >
-        {listOptions.length === 0 && (
-          <div className="hce-multiselect-empty">
-            {loading ? "Buscando..." : `Sin resultados para "${searchQuery}"`}
-          </div>
-        )}
+        {/* Con onSearch, por debajo de minSearchLength no hubo una búsqueda
+            real todavía (ver onChange) — "options" está vacío porque el
+            padre no tiene nada que mostrar aún, no porque la búsqueda no
+            encontró resultados. Sin este chequeo, el mensaje "Sin
+            resultados" aparecía apenas se abría el dropdown sin escribir
+            nada. */}
+        {listOptions.length === 0 &&
+          (!onSearch || normalizedQuery.length >= minSearchLength) && (
+            <div className="hce-multiselect-empty">
+              {loading
+                ? "Buscando..."
+                : `Sin resultados para "${searchQuery}"`}
+            </div>
+          )}
 
         {listOptions.map((opt, idx) => {
           const isAllRow = opt.value === ALL_VALUE;
