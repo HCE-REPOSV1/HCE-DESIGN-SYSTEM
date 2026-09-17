@@ -147,9 +147,15 @@ export const MultiSelect = ({
   }, [options, value]);
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
+  // Los ya seleccionados nunca se excluyen por el filtro de texto — deben
+  // seguir visibles y anclados arriba (ver sortedOptions) aunque su label no
+  // matchee la búsqueda actual, o el usuario pierde de vista lo que ya elegió
+  // en cuanto escribe algo para buscar OTRO elemento distinto.
   const filteredOptions = normalizedQuery
-    ? sortedOptions.filter((opt) =>
-        opt.label.toLowerCase().includes(normalizedQuery),
+    ? sortedOptions.filter(
+        (opt) =>
+          value.includes(opt.value) ||
+          opt.label.toLowerCase().includes(normalizedQuery),
       )
     : sortedOptions;
 

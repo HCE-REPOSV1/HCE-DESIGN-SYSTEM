@@ -81,6 +81,31 @@ export const ChecksSeleccionados: Story = {
 };
 
 /**
+ * Bug fix: los elementos ya seleccionados deben seguir visibles y anclados
+ * arriba de la lista aunque el usuario escriba una búsqueda que no matchea
+ * su label — antes desaparecían del listbox en cuanto el texto tecleado no
+ * incluía su nombre, perdiendo visibilidad de la selección previa.
+ *
+ * Para reproducir manualmente en Storybook: abrir el dropdown (ya viene con
+ * "Sede Central" preseleccionada) y escribir "norte" — "Sede Central" debe
+ * seguir apareciendo anclada arriba, con el checkbox marcado, junto al
+ * resultado que sí matchea la búsqueda ("Sede Norte").
+ */
+export const SeleccionadoPersisteAlBuscar: Story = {
+  render: (args) => {
+    const [value, setValue] = useState<string[]>(["1"]);
+    return <MultiSelect {...args} value={value} onChange={setValue} />;
+  },
+  args: {
+    options: EMPRESAS,
+    label: "Empresas",
+    disabled: false,
+    fullWidth: true,
+    required: false,
+  },
+};
+
+/**
  * disabled=true ya NO bloquea la apertura del dropdown (a diferencia del
  * comportamiento anterior, que usaba el `disabled` nativo de Autocomplete):
  * el panel se puede abrir e inspeccionar, pero cada opción queda inerte
