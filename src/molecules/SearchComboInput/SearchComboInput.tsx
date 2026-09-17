@@ -6,6 +6,7 @@ import {
   hceTransition,
 } from "../../tokens/hce.tokens";
 import { ChevronDownIcon } from "../../atoms/Icon/Icon";
+import { Menu } from "../../atoms/Menu/Menu";
 
 // Sombra de MUI Paper elevation=4
 const ELEVATION_4_SHADOW =
@@ -86,6 +87,10 @@ export function SearchComboInput({
   const [modeOpen, setModeOpen] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
+  // Ancho del panel de resultados portado a document.body (ver Menu) — se
+  // calcula del contenedor real porque, al salir del flujo normal del DOM,
+  // ya no puede heredar el ancho por CSS (width:100% relativo a qué).
+  const [menuWidth, setMenuWidth] = useState<number>();
 
   const BLUE = `var(--ds-color-interactive, ${hceColors.primary.blue[600]})`;
   const GRAY = hceColors.neutro.black[400];
@@ -94,13 +99,16 @@ export function SearchComboInput({
   const isLeft = modePosition === "left";
 
   useEffect(() => {
+    // El dropdown de resultados ya no vive en este subárbol (Menu lo porta a
+    // document.body) — su propio click-outside interno se encarga de
+    // cerrarlo. Este listener solo cierra el toggle de modo, que sigue
+    // siendo un <div> inline normal.
     function handleClickOutside(e: MouseEvent) {
       if (
         containerRef.current &&
         !containerRef.current.contains(e.target as Node)
       ) {
         setModeOpen(false);
-        setDropOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside, true);
@@ -109,8 +117,12 @@ export function SearchComboInput({
   }, []);
 
   useEffect(() => {
-    setDropOpen(options.length > 0 && value.length > 0);
+    const shouldOpen = options.length > 0 && value.length > 0;
+    setDropOpen(shouldOpen);
     setActiveIdx(-1);
+    if (shouldOpen) {
+      setMenuWidth(containerRef.current?.getBoundingClientRect().width);
+    }
   }, [options, value]);
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -344,78 +356,71 @@ export function SearchComboInput({
         )}
       </div>
 
-      {dropOpen && options.length > 0 && (
-        <div
-          id={listId}
-          role="listbox"
-          aria-label={`Resultados de búsqueda de ${currentMode.label}`}
-          style={{
-            position: "absolute",
-            top: "calc(100% + 4px)",
-            left: 0,
-            right: 0,
-            zIndex: 1400,
-            maxHeight: 240,
-            overflowY: "auto",
-            borderRadius: "8px",
-            border: `1px solid ${hceColors.primary.blue[100]}`,
-            backgroundColor: "#ffffff",
-            boxShadow: ELEVATION_4_SHADOW,
-          }}
-        >
-          {options.map((opt, idx) => (
-            <div
-              key={opt.value}
-              id={`${listId}-opt-${idx}`}
-              className="hce-scombo-option"
-              role="option"
-              aria-selected={activeIdx === idx}
-              data-testid={testId ? `${testId}-option-${opt.value}` : undefined}
-              onMouseEnter={() => setActiveIdx(idx)}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                handleSelectOption(opt);
-              }}
+      <Menu
+        open={dropOpen && options.length > 0}
+        onClose={() => setDropOpen(false)}
+        anchorRef={containerRef}
+        align="left"
+        role="listbox"
+        id={listId}
+        aria-label={`Resultados de búsqueda de ${currentMode.label}`}
+        panelClassName="hce-scombo-listbox"
+        panelStyle={{
+          width: menuWidth,
+          border: `1px solid ${hceColors.primary.blue[100]}`,
+          boxShadow: ELEVATION_4_SHADOW,
+        }}
+      >
+        {options.map((opt, idx) => (
+          <div
+            key={opt.value}
+            id={`${listId}-opt-${idx}`}
+            className="hce-scombo-option"
+            role="option"
+            aria-selected={activeIdx === idx}
+            data-testid={testId ? `${testId}-option-${opt.value}` : undefined}
+            onMouseEnter={() => setActiveIdx(idx)}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              handleSelectOption(opt);
+            }}
+            style={{
+              backgroundColor:
+                activeIdx === idx ? hceColors.primary.blue[50] : "transparent",
+            }}
+          >
+            <span
               style={{
-                backgroundColor:
-                  activeIdx === idx
-                    ? hceColors.primary.blue[50]
-                    : "transparent",
+                fontFamily: hceTypography.fontFamily,
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                color: hceColors.neutro.black[700],
+                flex: 1,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               }}
             >
+              {opt.label}
+            </span>
+            {opt.secondary && (
               <span
                 style={{
                   fontFamily: hceTypography.fontFamily,
-                  fontSize: "0.875rem",
-                  fontWeight: 500,
-                  color: hceColors.neutro.black[700],
-                  flex: 1,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
+                  fontSize: "0.72rem",
+                  fontWeight: 600,
+                  color: BLUE,
+                  marginLeft: 12,
+                  flexShrink: 0,
                   whiteSpace: "nowrap",
                 }}
               >
-                {opt.label}
+                {opt.secondary}
               </span>
-              {opt.secondary && (
-                <span
-                  style={{
-                    fontFamily: hceTypography.fontFamily,
-                    fontSize: "0.72rem",
-                    fontWeight: 600,
-                    color: BLUE,
-                    marginLeft: 12,
-                    flexShrink: 0,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {opt.secondary}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+            )}
+          </div>
+        ))}
+      </Menu>
     </div>
   );
 }
