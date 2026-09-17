@@ -1104,6 +1104,71 @@ export const WithoutMacPermission: Story = {
   },
 }
 
+// ─── type: "checkbox" ──────────────────────────────────────────────────────
+// Banderas booleanas independientes por fila (ej. Presuntivo/Repetitivo/
+// Definitivo de un diagnóstico) — a diferencia de "icon" (siempre muestra el
+// ícono, solo cambia color) o "switch" (toggle iOS), esto renderiza el
+// átomo Checkbox real: casilla vacía sin marcar, check verde marcado.
+interface CheckboxDemoRow {
+  id: string
+  diagnosis: string
+  presumptive: boolean
+  repetitive: boolean
+  definitive: boolean
+}
+
+const checkboxDemoRows: CheckboxDemoRow[] = [
+  { id: "1", diagnosis: "Faringitis aguda", presumptive: true, repetitive: false, definitive: false },
+  { id: "2", diagnosis: "Resfriado común (nasofaringitis aguda)", presumptive: true, repetitive: false, definitive: false },
+  { id: "3", diagnosis: "Diabetes mellitus tipo 2", presumptive: false, repetitive: true, definitive: true },
+]
+
+const checkboxDemoColumns: GenericTableColumn<CheckboxDemoRow>[] = [
+  { key: "diagnosis", header: "Diagnóstico", type: "text", field: "diagnosis", width: 200, align: "left" },
+  {
+    key: "presumptive",
+    header: "Presuntivo",
+    type: "checkbox",
+    checkedGetter: (row) => row.presumptive,
+    onClick: (row, checked) => {
+      console.log(`Presuntivo de "${row.diagnosis}" -> ${checked}`)
+    },
+    width: 90,
+    align: "center",
+  },
+  {
+    key: "repetitive",
+    header: "Repetitivo",
+    type: "checkbox",
+    checkedGetter: (row) => row.repetitive,
+    onClick: (row, checked) => {
+      console.log(`Repetitivo de "${row.diagnosis}" -> ${checked}`)
+    },
+    width: 90,
+    align: "center",
+  },
+  {
+    key: "definitive",
+    header: "Definitivo",
+    type: "checkbox",
+    checkedGetter: (row) => row.definitive,
+    onClick: (row, checked) => {
+      console.log(`Definitivo de "${row.diagnosis}" -> ${checked}`)
+    },
+    width: 90,
+    align: "center",
+  },
+]
+
+export const CheckboxColumns: StoryObj<typeof GenericTable<CheckboxDemoRow>> = {
+  args: {
+    rows: checkboxDemoRows,
+    columns: checkboxDemoColumns,
+    getRowId: (row) => row.id,
+    maxHeight: "100%",
+  },
+}
+
 function toTvPatientName(fullName: string) {
   const parts = fullName.trim().split(/\s+/)
 

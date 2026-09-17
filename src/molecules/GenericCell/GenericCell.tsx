@@ -18,6 +18,7 @@ export type GenericColumnType =
   | "waiting-time"
   | "icon"
   | "switch"
+  | "checkbox"
   | "tag"
   | "list"
   | "datetime"

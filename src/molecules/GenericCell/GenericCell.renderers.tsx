@@ -1,5 +1,6 @@
 import type { HTMLAttributes, MouseEvent, ReactNode } from "react";
 import { AntSwitch } from "./AntSwitch";
+import { Checkbox } from "../../atoms/Checkbox/Checkbox";
 import { PriorityBadge } from "../../atoms/PriorityBadge/PriorityBadge";
 import { BoxBadge } from "../../atoms/BoxBadge/BoxBadge";
 import { AttentionCode } from "../../atoms/AttentionCode/AttentionCode";
@@ -303,6 +304,32 @@ export const cellRenderers: {
             {label}
           </span>
         )}
+      </div>
+    );
+  },
+
+  // Checkbox real (átomo atoms/Checkbox) en vez del cuadrado con ícono de
+  // "icon" — para columnas de banderas booleanas independientes por fila
+  // (ej. Presuntivo/Repetitivo/Definitivo) donde se necesita la marca de
+  // check verde + casilla vacía sin marcar, no un ícono siempre visible con
+  // solo el color cambiando.
+  checkbox: ({ row, column, value, disabled, testId }) => {
+    const checked = column.checkedGetter
+      ? column.checkedGetter(row)
+      : Boolean(value);
+
+    return (
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <Checkbox
+          checked={checked}
+          disabled={disabled}
+          ariaLabel={column.header}
+          onChange={(next) => {
+            if (disabled) return;
+            column.onClick?.(row, next);
+          }}
+          testId={testId}
+        />
       </div>
     );
   },
